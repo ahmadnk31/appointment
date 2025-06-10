@@ -1,0 +1,331 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Tenant model for multi-tenancy
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  domain    String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  users                User[]
+  services             Service[]
+  appointments         Appointment[]
+  settings             TenantSettings?
+  notifications        Notification[]
+  recurringAppointments RecurringAppointment[]
+  waitlist             Waitlist[]
+
+  @@map("tenants")
+}
+
+// Tenant settings
+model TenantSettings {
+  id               String  @id @default(cuid())
+  tenantId         String  @unique
+  businessName     String
+  businessEmail    String
+  businessPhone    String?
+  businessAddress  String?
+  timeZone         String  @default("UTC")
+  workingHours     Json?   // Store working hours as JSON
+  bookingSettings  Json?   // Store booking rules as JSON
+  emailSettings    Json?   // Store email notification settings
+  paymentSettings  Json?   // Store payment configuration (Stripe keys, etc.)
+  cancellationSettings Json? // Store cancellation policies
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("tenant_settings")
+}
+
+// User roles enum
+enum UserRole {
+  ADMIN
+  PROVIDER
+  CLIENT
+}
+
+// User model
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  name          String
+  phone         String?
+  role          UserRole  @default(CLIENT)
+  tenantId      String
+  isActive      Boolean   @default(true)
+  emailVerified DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  tenant              Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  appointments        Appointment[]
+  providerServices    Service[]     @relation("ProviderServices")
+  providerAppointments Appointment[] @relation("ProviderAppointments")
+  accounts            Account[]
+  sessions            Session[]
+  notifications       Notification[]
+  recurringAppointments RecurringAppointment[]
+  providerRecurringAppointments RecurringAppointment[] @relation("ProviderRecurringAppointments")
+  waitlistEntries     Waitlist[]
+  providerWaitlist    Waitlist[]    @relation("ProviderWaitlist")
+
+  @@map("users")
+}
+
+// Service/Appointment type model
+model Service {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  duration    Int     // Duration in minutes
+  price       Float
+  isActive    Boolean @default(true)
+  tenantId    String
+  providerId  String
+  imageUrl    String? // URL to service image in S3
+  imageKey    String? // S3 object key for image management
+
+  // Relations
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  provider     User          @relation("ProviderServices", fields: [providerId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+  recurringAppointments RecurringAppointment[]
+  waitlistEntries Waitlist[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("services")
+}
+
+// Appointment status enum
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+// Payment method enum
+enum PaymentMethod {
+  CASH
+  ONLINE
+}
+
+// Payment status enum
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+// Recurring frequency enum
+enum RecurrenceFrequency {
+  DAILY
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+// Waitlist status enum
+enum WaitlistStatus {
+  ACTIVE
+  NOTIFIED
+  BOOKED
+  CANCELLED
+  EXPIRED
+}
+
+// Recurring appointment template model
+model RecurringAppointment {
+  id                String              @id @default(cuid())
+  frequency         RecurrenceFrequency
+  interval          Int                 @default(1) // Every X frequency (e.g., every 2 weeks)
+  daysOfWeek        String?             // JSON array for weekly recurrence [1,3,5] for Mon,Wed,Fri
+  dayOfMonth        Int?                // For monthly recurrence (e.g., 15th of each month)
+  endDate           DateTime?           // When recurrence should stop
+  maxOccurrences    Int?                // Maximum number of appointments to create
+  isActive          Boolean             @default(true)
+  
+  // Appointment details
+  duration          Int                 // Duration in minutes
+  notes             String?
+  tenantId          String
+  clientId          String
+  providerId        String
+  serviceId         String
+  
+  // Payment settings
+  paymentMethod     PaymentMethod       @default(CASH)
+  paymentAmount     Float?
+  
+  // Relations
+  tenant            Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  client            User                @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  provider          User                @relation("ProviderRecurringAppointments", fields: [providerId], references: [id], onDelete: Cascade)
+  service           Service             @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  appointments      Appointment[]       // Generated appointments from this template
+  
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@map("recurring_appointments")
+}
+
+// Waitlist model for when desired slots are unavailable
+model Waitlist {
+  id                String       @id @default(cuid())
+  preferredDate     DateTime?    // Preferred appointment date
+  preferredTimeSlot String?      // Preferred time slot (e.g., "morning", "afternoon", "09:00-12:00")
+  flexibleDates     Boolean      @default(false) // If client is flexible with dates
+  flexibleTimes     Boolean      @default(false) // If client is flexible with times
+  status            WaitlistStatus @default(ACTIVE)
+  priority          Int          @default(1) // Higher number = higher priority
+  notes             String?
+  notificationSent  Boolean      @default(false)
+  notifiedAt        DateTime?
+  expiresAt         DateTime?    // When this waitlist entry expires
+  
+  // Relations
+  tenantId          String
+  clientId          String
+  providerId        String?      // Optional preferred provider
+  serviceId         String
+  
+  tenant            Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  client            User         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  provider          User?        @relation("ProviderWaitlist", fields: [providerId], references: [id], onDelete: SetNull)
+  service           Service      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@index([tenantId, status])
+  @@index([preferredDate])
+  @@map("waitlist")
+}
+
+// Appointment model
+model Appointment {
+  id            String            @id @default(cuid())
+  startTime     DateTime
+  endTime       DateTime
+  status        AppointmentStatus @default(PENDING)
+  notes         String?
+  tenantId      String
+  clientId      String
+  providerId    String
+  serviceId     String
+  
+  // Recurring appointment reference
+  recurringAppointmentId String?
+  
+  // Payment fields
+  paymentMethod PaymentMethod     @default(CASH)
+  paymentStatus PaymentStatus     @default(PENDING)
+  paymentAmount Float?
+  stripePaymentIntentId String?
+  stripeChargeId       String?
+  refundAmount         Float?
+  refundReason         String?
+  cancellationReason   String?
+  cancelledAt          DateTime?
+  
+  // Google Calendar integration
+  calendarEventId      String?
+
+  // Relations
+  tenant   Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  client   User    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  provider User    @relation("ProviderAppointments", fields: [providerId], references: [id], onDelete: Cascade)
+  service  Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  recurringAppointment RecurringAppointment? @relation(fields: [recurringAppointmentId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("appointments")
+}
+
+// NextAuth.js tables
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verificationtokens")
+}
+
+// Notification model for real-time notifications
+model Notification {
+  id        String   @id @default(cuid())
+  type      String   // 'appointment_booked', 'appointment_cancelled', 'payment_received', etc.
+  title     String
+  message   String
+  data      String?  // JSON data for additional context
+  read      Boolean  @default(false)
+  priority  String   @default("medium") // 'low', 'medium', 'high'
+  userId    String
+  tenantId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([userId, tenantId])
+  @@index([read])
+  @@map("notifications")
+}
