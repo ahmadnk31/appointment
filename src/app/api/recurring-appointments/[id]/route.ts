@@ -21,9 +21,10 @@ const updateRecurringAppointmentSchema = z.object({
 // GET /api/recurring-appointments/[id] - Get specific recurring appointment
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -39,7 +40,7 @@ export async function GET(
     }
 
     const where: any = {
-      id: params.id,
+      id: id,
       tenantId: user.tenantId,
     };
 
@@ -94,9 +95,10 @@ export async function GET(
 // PUT /api/recurring-appointments/[id] - Update recurring appointment
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -117,7 +119,7 @@ export async function PUT(
     // Find existing recurring appointment
     const existingRecurring = await prisma.recurringAppointment.findFirst({
       where: {
-        id: params.id,
+        id: id,
         tenantId: user.tenantId,
         ...(user.role === 'CLIENT' ? { clientId: session.user.id } : {}),
         ...(user.role === 'PROVIDER' ? { providerId: session.user.id } : {})
@@ -149,7 +151,7 @@ export async function PUT(
     if (data.paymentAmount) updateData.paymentAmount = data.paymentAmount;
 
     const updatedRecurring = await prisma.recurringAppointment.update({
-      where: { id: params.id },
+      where: { id: id },
       data: updateData,
       include: {
         client: {
@@ -168,7 +170,7 @@ export async function PUT(
     if (data.isActive === false) {
       await prisma.appointment.updateMany({
         where: {
-          recurringAppointmentId: params.id,
+          recurringAppointmentId: id,
           startTime: {
             gte: new Date()
           },
@@ -197,7 +199,7 @@ export async function PUT(
         userId: user.role === 'CLIENT' ? existingRecurring.providerId : existingRecurring.clientId,
         tenantId: user.tenantId,
         data: JSON.stringify({
-          recurringAppointmentId: params.id,
+          recurringAppointmentId: id,
           changes: Object.keys(updateData)
         })
       }
@@ -223,9 +225,10 @@ export async function PUT(
 // DELETE /api/recurring-appointments/[id] - Delete recurring appointment
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -243,7 +246,7 @@ export async function DELETE(
     // Find existing recurring appointment
     const existingRecurring = await prisma.recurringAppointment.findFirst({
       where: {
-        id: params.id,
+        id: id,
         tenantId: user.tenantId,
         ...(user.role === 'CLIENT' ? { clientId: session.user.id } : {}),
         ...(user.role === 'PROVIDER' ? { providerId: session.user.id } : {})
@@ -262,7 +265,7 @@ export async function DELETE(
     // Cancel all future appointments first
     await prisma.appointment.updateMany({
       where: {
-        recurringAppointmentId: params.id,
+        recurringAppointmentId: id,
         startTime: {
           gte: new Date()
         },
@@ -279,7 +282,7 @@ export async function DELETE(
 
     // Delete the recurring appointment
     await prisma.recurringAppointment.delete({
-      where: { id: params.id }
+      where: { id: id }
     });
 
     // Create notification
@@ -291,7 +294,7 @@ export async function DELETE(
         userId: user.role === 'CLIENT' ? existingRecurring.providerId : existingRecurring.clientId,
         tenantId: user.tenantId,
         data: JSON.stringify({
-          recurringAppointmentId: params.id,
+          recurringAppointmentId: id,
           serviceName: existingRecurring.service.name
         })
       }

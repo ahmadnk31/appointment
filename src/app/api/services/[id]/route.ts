@@ -6,9 +6,10 @@ import { prisma } from '@/lib/prisma'
 // GET /api/services/[id] - Get a specific service
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -16,7 +17,7 @@ export async function GET(
 
     const service = await prisma.service.findFirst({
       where: {
-        id: params.id,
+        id: id,
         tenantId: session.user.tenantId,
       },
       include: {
@@ -41,9 +42,10 @@ export async function GET(
 // PUT /api/services/[id] - Update a service
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -67,7 +69,7 @@ export async function PUT(
     // Check if service exists and belongs to the user's tenant
     const existingService = await prisma.service.findFirst({
       where: {
-        id: params.id,
+        id: id,
         tenantId: session.user.tenantId,
       },
     })
@@ -82,7 +84,7 @@ export async function PUT(
     }
 
     const updatedService = await prisma.service.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         name,
         description,
@@ -107,10 +109,10 @@ export async function PUT(
 // PATCH /api/services/[id] - Partially update a service (e.g., toggle active status)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const {id}=await params
+    const { id } = await params
     const session = await getServerSession(authOptions)
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -126,7 +128,7 @@ export async function PATCH(
     // Check if service exists and belongs to the user's tenant
     const existingService = await prisma.service.findFirst({
       where: {
-        id: params.id,
+        id: id,
         tenantId: session.user.tenantId,
       },
     })
@@ -141,7 +143,7 @@ export async function PATCH(
     }
 
     const updatedService = await prisma.service.update({
-      where: { id: params.id },
+      where: { id: id },
       data: updates,
       include: {
         provider: { select: { id: true, name: true, email: true } },
@@ -161,9 +163,10 @@ export async function PATCH(
 // DELETE /api/services/[id] - Delete a service
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -177,7 +180,7 @@ export async function DELETE(
     // Check if service exists and belongs to the user's tenant
     const existingService = await prisma.service.findFirst({
       where: {
-        id: params.id,
+        id: id,
         tenantId: session.user.tenantId,
       },
     })
@@ -194,7 +197,7 @@ export async function DELETE(
     // Check if there are any appointments associated with this service
     const appointmentsCount = await prisma.appointment.count({
       where: {
-        serviceId: params.id,
+        serviceId: id,
         status: 'PENDING',
       },
     })
@@ -207,7 +210,7 @@ export async function DELETE(
     }
 
     await prisma.service.delete({
-      where: { id: params.id },
+      where: { id: id },
     })
 
     return NextResponse.json({ message: 'Service deleted successfully' })

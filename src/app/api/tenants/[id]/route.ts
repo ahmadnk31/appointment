@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma'
 // GET /api/tenants/[id] - Get tenant details
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
     const {id:tenantId}=await params
   try {
@@ -72,16 +72,17 @@ export async function GET(
 // PUT /api/tenants/[id] - Update tenant
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
     
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const tenantId = params.id
+    const tenantId = id
     
     // Admin can update any tenant, others can only update their own
     if (session.user.role !== 'ADMIN' && session.user.tenantId !== tenantId) {
@@ -156,9 +157,10 @@ export async function PUT(
 // DELETE /api/tenants/[id] - Delete tenant (Admin only)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
     
     if (!session?.user) {
@@ -170,7 +172,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
-    const tenantId = params.id
+    const tenantId = id
 
     // Check if tenant exists
     const existingTenant = await prisma.tenant.findUnique({

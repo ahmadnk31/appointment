@@ -17,9 +17,10 @@ const updateWaitlistSchema = z.object({
 // GET /api/waitlist/[id] - Get specific waitlist entry
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -35,7 +36,7 @@ export async function GET(
     }
 
     const where: any = {
-      id: params.id,
+      id: id,
       tenantId: user.tenantId,
     };
 
@@ -79,9 +80,10 @@ export async function GET(
 // PUT /api/waitlist/[id] - Update waitlist entry
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

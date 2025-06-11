@@ -6,9 +6,10 @@ import { prisma } from '@/lib/prisma'
 // PUT /api/users/[id] - Update user (Admin only)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
     if (!session?.user || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -27,7 +28,7 @@ export async function PUT(
     // Check if user exists
     const existingUser = await prisma.user.findFirst({
       where: {
-        id: params.id,
+        id: id,
         tenantId: session.user.tenantId,
       },
     })
@@ -55,7 +56,7 @@ export async function PUT(
 
     // Update user
     const updatedUser = await prisma.user.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         name,
         email,
@@ -86,9 +87,10 @@ export async function PUT(
 // PATCH /api/users/[id] - Update user status (Admin only)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
     if (!session?.user || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -107,7 +109,7 @@ export async function PATCH(
     // Check if user exists
     const existingUser = await prisma.user.findFirst({
       where: {
-        id: params.id,
+        id: id,
         tenantId: session.user.tenantId,
       },
     })
@@ -120,7 +122,7 @@ export async function PATCH(
     }
 
     // Prevent admin from deactivating themselves
-    if (params.id === session.user.id && !isActive) {
+    if (id === session.user.id && !isActive) {
       return NextResponse.json(
         { error: 'You cannot deactivate your own account' },
         { status: 400 }
@@ -129,7 +131,7 @@ export async function PATCH(
 
     // Update user status
     const updatedUser = await prisma.user.update({
-      where: { id: params.id },
+      where: { id: id },
       data: { isActive },
       select: {
         id: true,
@@ -155,9 +157,10 @@ export async function PATCH(
 // DELETE /api/users/[id] - Delete user (Admin only)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
     if (!session?.user || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -166,7 +169,7 @@ export async function DELETE(
     // Check if user exists
     const existingUser = await prisma.user.findFirst({
       where: {
-        id: params.id,
+        id: id,
         tenantId: session.user.tenantId,
       },
     })
@@ -179,7 +182,7 @@ export async function DELETE(
     }
 
     // Prevent admin from deleting themselves
-    if (params.id === session.user.id) {
+    if (id === session.user.id) {
       return NextResponse.json(
         { error: 'You cannot delete your own account' },
         { status: 400 }
@@ -192,15 +195,15 @@ export async function DELETE(
       await tx.appointment.deleteMany({
         where: {
           OR: [
-            { clientId: params.id },
-            { providerId: params.id }
+            { clientId: id },
+            { providerId: id }
           ]
         }
       })
 
       // Delete the user
       await tx.user.delete({
-        where: { id: params.id }
+        where: { id: id }
       })
     })
 
