@@ -8,9 +8,10 @@ import { calendarService } from '@/lib/calendar'
 // PUT /api/appointments/[id] - Update appointment
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -19,7 +20,7 @@ export async function PUT(
 
     // Get existing appointment
     const existingAppointment = await prisma.appointment.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         client: true,
         provider: true,
@@ -89,7 +90,7 @@ export async function PUT(
         
         const conflictingAppointment = await prisma.appointment.findFirst({
           where: {
-            id: { not: params.id },
+            id: { not: id },
             providerId: checkProviderId,
             tenantId: session.user.tenantId,
             status: { notIn: ['CANCELLED'] },
@@ -124,7 +125,7 @@ export async function PUT(
 
     // Update appointment
     const updatedAppointment = await prisma.appointment.update({
-      where: { id: params.id },
+      where: { id: id },
       data: updateData,
       include: {
         client: { select: { id: true, name: true, email: true, phone: true } },
@@ -159,7 +160,7 @@ export async function PUT(
         
         // Clear the calendar event ID from the appointment
         await prisma.appointment.update({
-          where: { id: params.id },
+          where: { id: id },
           data: { calendarEventId: null },
         })
       }
@@ -192,7 +193,7 @@ export async function PUT(
         // Update the appointment with the calendar event ID if creation was successful
         if (calendarEventId) {
           await prisma.appointment.update({
-            where: { id: params.id },
+            where: { id: id },
             data: { calendarEventId },
           })
         }
@@ -218,6 +219,7 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -235,7 +237,7 @@ export async function PATCH(
 
     // Get existing appointment
     const existingAppointment = await prisma.appointment.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         client: true,
         provider: true,
@@ -263,7 +265,7 @@ export async function PATCH(
 
     // Update appointment status
     const updatedAppointment = await prisma.appointment.update({
-      where: { id: params.id },
+      where: { id: id },
       data: { status },
       include: {
         client: { select: { id: true, name: true, email: true, phone: true } },
@@ -320,6 +322,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -327,7 +330,7 @@ export async function DELETE(
 
     // Get existing appointment
     const existingAppointment = await prisma.appointment.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         client: true,
         provider: true,
@@ -358,7 +361,7 @@ export async function DELETE(
 
     // Delete appointment
     await prisma.appointment.delete({
-      where: { id: params.id },
+      where: { id: id },
     })
 
     // Send cancellation email
