@@ -15,10 +15,10 @@ interface CancellationSettings {
 // POST /api/appointments/[id]/cancel - Cancel an appointment with time restrictions
 export async function POST(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = context.params
+    const { id } = await params
     const session = await getServerSession(authOptions)
     const tenantId = request.headers.get('x-tenant-id')
     
