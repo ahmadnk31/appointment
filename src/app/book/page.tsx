@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -32,7 +32,7 @@ interface Service {
   }
 }
 
-export default function PublicBookingPage() {  const router = useRouter()
+function PublicBookingForm() {  const router = useRouter()
   const searchParams = useSearchParams()
   const tenantSlug = searchParams.get('tenant')
   
@@ -525,5 +525,13 @@ export default function PublicBookingPage() {  const router = useRouter()
         </div>
       )}
     </div>
+  )
+}
+
+export default function PublicBookingPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <PublicBookingForm />
+    </Suspense>
   )
 }

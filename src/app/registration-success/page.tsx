@@ -1,12 +1,13 @@
 'use client'
 
 import { useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { CheckCircle, Mail, ArrowRight } from 'lucide-react'
 
-export default function RegistrationSuccessPage() {
+function RegistrationSuccessContent() {
   const searchParams = useSearchParams()
   const email = searchParams.get('email')
 
@@ -88,5 +89,13 @@ export default function RegistrationSuccessPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function RegistrationSuccessPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <RegistrationSuccessContent />
+    </Suspense>
   )
 }
