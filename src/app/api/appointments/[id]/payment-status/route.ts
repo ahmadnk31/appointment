@@ -4,10 +4,11 @@ import { prisma } from '@/lib/prisma'
 // GET /api/appointments/[id]/payment-status - Get appointment payment status
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const appointmentId = params.id
+    const { id } = await params
+    const appointmentId = id
 
     const appointment = await prisma.appointment.findUnique({
       where: { id: appointmentId },

@@ -216,7 +216,7 @@ export async function PUT(
 // PATCH /api/appointments/[id] - Update appointment status
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params
@@ -319,7 +319,7 @@ export async function PATCH(
 // DELETE /api/appointments/[id] - Delete appointment
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params
