@@ -104,7 +104,7 @@ export async function PUT(
     // Find existing waitlist entry
     const existingEntry = await prisma.waitlist.findFirst({
       where: {
-        id: params.id,
+        id: id,
         tenantId: user.tenantId,
         ...(user.role === 'CLIENT' ? { clientId: session.user.id } : {}),
         ...(user.role === 'PROVIDER' ? { providerId: session.user.id } : {})
@@ -142,7 +142,7 @@ export async function PUT(
 
     // Update waitlist entry
     const updatedEntry = await prisma.waitlist.update({
-      where: { id: params.id },
+      where: { id: id },
       data: updateData,
       include: {
         client: {
@@ -186,7 +186,7 @@ export async function PUT(
             userId: notificationUserId,
             tenantId: user.tenantId,
             data: JSON.stringify({
-              waitlistId: params.id,
+              waitlistId: id,
               oldStatus: existingEntry.status,
               newStatus: data.status,
               serviceName: existingEntry.service.name
