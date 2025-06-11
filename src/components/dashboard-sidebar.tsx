@@ -84,6 +84,12 @@ const getNavigationItems = (role: string) => {
         href: '/dashboard/clients',
         icon: Users,
         roles: ['PROVIDER']
+      },
+      {
+        label: 'Settings',
+        href: '/dashboard/settings',
+        icon: Settings,
+        roles: ['PROVIDER']
       }
     ]
   }

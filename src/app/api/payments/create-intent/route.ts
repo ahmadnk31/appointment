@@ -34,6 +34,11 @@ export async function POST(request: NextRequest) {
         service: true,
         client: true,
         provider: true,
+        tenant: {
+          include: {
+            settings: true
+          }
+        }
       }
     })
 
@@ -52,21 +57,41 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create payment intent
+    // Get tenant's Stripe Connect account
+    const tenantSettings = appointment.tenant.settings
+    if (!tenantSettings?.stripeAccountId) {
+      return NextResponse.json(
+        { error: 'Business has not set up payment processing yet' },
+        { status: 400 }
+      )
+    }
+
+    // Calculate platform commission
+    const commissionRate = tenantSettings.commissionRate || 0.05 // 5% default
+    const platformCommission = Math.round(amount * commissionRate * 100) // In cents
+    const businessAmount = Math.round(amount * 100) - platformCommission // In cents
+
+    // Create payment intent with application fee (platform commission)
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(amount * 100), // Convert to cents
       currency,
+      application_fee_amount: platformCommission,
+      transfer_data: {
+        destination: tenantSettings.stripeAccountId,
+      },
       metadata: {
         appointmentId: appointment.id,
         tenantId,
         clientId: appointment.clientId,
         providerId: appointment.providerId,
         serviceId: appointment.serviceId,
+        platformCommission: (platformCommission / 100).toString(),
+        businessRevenue: (businessAmount / 100).toString(),
       },
       description: `Payment for ${appointment.service.name} appointment`,
     })
 
-    // Update appointment with payment intent ID
+    // Update appointment with payment intent ID and commission details
     await prisma.appointment.update({
       where: { id: appointmentId },
       data: {
@@ -74,6 +99,8 @@ export async function POST(request: NextRequest) {
         paymentAmount: amount,
         paymentMethod: 'ONLINE',
         paymentStatus: 'PENDING',
+        platformCommission: platformCommission / 100,
+        businessRevenue: businessAmount / 100,
       }
     })
 

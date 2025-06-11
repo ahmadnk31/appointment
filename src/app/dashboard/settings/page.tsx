@@ -53,6 +53,12 @@ interface TenantSettings {
       webhookSecret: string
     }
   }
+  stripeConnect?: {
+    accountId: string | null
+    accountStatus: string | null
+    onboardingUrl: string | null
+    commissionRate: number
+  }
   cancellationSettings?: {
     allowCancellation: boolean
     cancellationDeadlineHours: number
@@ -89,10 +95,18 @@ export default function TenantSettingsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+  const [stripeConnectLoading, setStripeConnectLoading] = useState(false)
+  const [stripeConnectStatus, setStripeConnectStatus] = useState<{
+    connected: boolean
+    status: string | null
+    accountId: string | null
+    onboardingUrl: string | null
+  } | null>(null)
 
   useEffect(() => {
     if (session?.user?.tenantId) {
       fetchTenantSettings()
+      checkStripeConnectStatus()
     }
   }, [session])
 
@@ -109,6 +123,41 @@ export default function TenantSettingsPage() {
       setMessage({ type: 'error', text: 'Failed to load settings' })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const checkStripeConnectStatus = async () => {
+    try {
+      const response = await fetch('/api/payments/connect/onboard')
+      if (response.ok) {
+        const data = await response.json()
+        setStripeConnectStatus(data)
+      }
+    } catch (error) {
+      console.error('Error checking Stripe Connect status:', error)
+    }
+  }
+
+  const handleStripeConnectOnboarding = async () => {
+    setStripeConnectLoading(true)
+    try {
+      const response = await fetch('/api/payments/connect/onboard', {
+        method: 'POST'
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        // Redirect to Stripe onboarding
+        window.location.href = data.onboardingUrl
+      } else {
+        const error = await response.json()
+        setMessage({ type: 'error', text: error.error || 'Failed to start Stripe onboarding' })
+      }
+    } catch (error) {
+      console.error('Error starting Stripe onboarding:', error)
+      setMessage({ type: 'error', text: 'Failed to start Stripe onboarding' })
+    } finally {
+      setStripeConnectLoading(false)
     }
   }
 
@@ -325,12 +374,34 @@ export default function TenantSettingsPage() {
       </div>
     )
   }
+  // Check user permissions
+  if (session.user.role !== 'ADMIN' && session.user.role !== 'PROVIDER') {
+    return (
+      <div className="container mx-auto p-6">
+        <Card>
+          <CardContent className="p-6 text-center">
+            <AlertCircle className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Access Denied</h3>
+            <p className="text-gray-600">You don't have permission to access settings.</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="p-4 lg:p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Tenant Settings</h1>
-          <p className="text-gray-600">Configure your organization settings and preferences</p>
+          <h1 className="text-3xl font-bold">
+            {session.user.role === 'PROVIDER' ? 'Provider Settings' : 'Tenant Settings'}
+          </h1>
+          <p className="text-gray-600">
+            {session.user.role === 'PROVIDER' 
+              ? 'Configure your payment settings and Stripe Connect account' 
+              : 'Configure your organization settings and preferences'
+            }
+          </p>
         </div>
         <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
           <Save className="w-4 h-4 mr-2" />
@@ -345,7 +416,79 @@ export default function TenantSettingsPage() {
             {message.text}
           </AlertDescription>
         </Alert>
-      )}      <Tabs defaultValue="business" className="space-y-6">
+      )}
+
+      {session.user.role === 'PROVIDER' ? (
+        // Provider view - only payment settings
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <SettingsIcon className="w-5 h-5" />
+              Payment Settings
+            </CardTitle>
+            <CardDescription>
+              Connect your Stripe account to receive payments from clients
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Stripe Connect Section */}
+            <div className="space-y-4 p-4 border rounded-lg bg-blue-50">
+              <h4 className="font-medium text-blue-900">Stripe Connect - Payment Processing</h4>
+              <p className="text-sm text-blue-800">
+                Connect your business to Stripe to accept online payments. Platform fee: 5% + Stripe fees
+              </p>
+              
+              {stripeConnectStatus ? (
+                <div className="space-y-3">
+                  {stripeConnectStatus.connected ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-3 h-3 rounded-full ${
+                          stripeConnectStatus.status === 'active' ? 'bg-green-500' : 
+                          stripeConnectStatus.status === 'restricted' ? 'bg-yellow-500' : 'bg-red-500'
+                        }`} />
+                        <span className="text-sm font-medium">
+                          Status: {stripeConnectStatus.status === 'active' ? 'Active' : 
+                                  stripeConnectStatus.status === 'restricted' ? 'Setup Required' : 'Pending'}
+                        </span>
+                      </div>
+                      
+                      {stripeConnectStatus.status !== 'active' && (
+                        <div className="text-sm text-orange-600">
+                          Your Stripe account needs additional setup to accept payments.
+                          <Button 
+                            variant="link" 
+                            className="p-0 h-auto text-orange-600"
+                            onClick={() => window.open('https://dashboard.stripe.com', '_blank')}
+                          >
+                            Complete setup in Stripe Dashboard
+                          </Button>
+                        </div>
+                      )}
+                      
+                      <div className="text-xs text-gray-600">
+                        Account ID: {stripeConnectStatus.accountId}
+                      </div>
+                    </div>
+                  ) : (
+                    <Button 
+                      onClick={handleStripeConnectOnboarding}
+                      disabled={stripeConnectLoading}
+                      className="w-full"
+                    >
+                      {stripeConnectLoading ? 'Setting up...' : 'Connect Stripe Account'}
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <div className="text-sm text-gray-500">Loading Stripe status...</div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        // Admin view - all settings tabs
+      <Tabs defaultValue="business" className="space-y-6">
         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
           <TabsTrigger value="business">Business Info</TabsTrigger>
           <TabsTrigger value="hours">Working Hours</TabsTrigger>
@@ -707,43 +850,59 @@ export default function TenantSettingsPage() {
                       </Select>
                     </div>
 
-                    {settings.paymentSettings?.acceptOnline && (
-                      <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
-                        <h4 className="font-medium">Stripe Settings</h4>
-                        <div className="grid gap-4">
-                          <div className="grid gap-2">
-                            <Label htmlFor="stripePublicKey">Publishable Key</Label>
-                            <Input
-                              id="stripePublicKey"
-                              type="password"
-                              placeholder="pk_test_..."
-                              value={settings.paymentSettings?.stripeSettings?.publicKey || ''}
-                              onChange={(e) => updateStripeSettings('publicKey', e.target.value)}
-                            />
-                          </div>
-                          <div className="grid gap-2">
-                            <Label htmlFor="stripeSecretKey">Secret Key</Label>
-                            <Input
-                              id="stripeSecretKey"
-                              type="password"
-                              placeholder="sk_test_..."
-                              value={settings.paymentSettings?.stripeSettings?.secretKey || ''}
-                              onChange={(e) => updateStripeSettings('secretKey', e.target.value)}
-                            />
-                          </div>
-                          <div className="grid gap-2">
-                            <Label htmlFor="webhookSecret">Webhook Secret</Label>
-                            <Input
-                              id="webhookSecret"
-                              type="password"
-                              placeholder="whsec_..."
-                              value={settings.paymentSettings?.stripeSettings?.webhookSecret || ''}
-                              onChange={(e) => updateStripeSettings('webhookSecret', e.target.value)}
-                            />
-                          </div>
+                    {/* Stripe Connect Section */}
+                    <div className="space-y-4 p-4 border rounded-lg bg-blue-50">
+                      <h4 className="font-medium text-blue-900">Stripe Connect - Payment Processing</h4>
+                      <p className="text-sm text-blue-800">
+                        Connect your business to Stripe to accept online payments. Platform fee: 5% + Stripe fees
+                      </p>
+                      
+                      {stripeConnectStatus ? (
+                        <div className="space-y-3">
+                          {stripeConnectStatus.connected ? (
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <div className={`w-3 h-3 rounded-full ${
+                                  stripeConnectStatus.status === 'active' ? 'bg-green-500' : 
+                                  stripeConnectStatus.status === 'restricted' ? 'bg-yellow-500' : 'bg-red-500'
+                                }`} />
+                                <span className="text-sm font-medium">
+                                  Status: {stripeConnectStatus.status === 'active' ? 'Active' : 
+                                          stripeConnectStatus.status === 'restricted' ? 'Setup Required' : 'Pending'}
+                                </span>
+                              </div>
+                              
+                              {stripeConnectStatus.status !== 'active' && (
+                                <div className="text-sm text-orange-600">
+                                  Your Stripe account needs additional setup to accept payments.
+                                  <Button 
+                                    variant="link" 
+                                    className="p-0 h-auto text-orange-600"
+                                    onClick={() => window.open('https://dashboard.stripe.com', '_blank')}
+                                  >
+                                    Complete setup in Stripe Dashboard
+                                  </Button>
+                                </div>
+                              )}
+                              
+                              <div className="text-xs text-gray-600">
+                                Account ID: {stripeConnectStatus.accountId}
+                              </div>
+                            </div>
+                          ) : (
+                            <Button 
+                              onClick={handleStripeConnectOnboarding}
+                              disabled={stripeConnectLoading}
+                              className="w-full"
+                            >
+                              {stripeConnectLoading ? 'Setting up...' : 'Connect Stripe Account'}
+                            </Button>
+                          )}
                         </div>
-                      </div>
-                    )}
+                      ) : (
+                        <div className="text-sm text-gray-500">Loading Stripe status...</div>
+                      )}
+                    </div>
                   </>
                 )}
               </div>
@@ -862,6 +1021,7 @@ export default function TenantSettingsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+      )}
     </div>
   )
 }

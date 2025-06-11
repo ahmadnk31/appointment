@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils'
 import AvailabilityCalendar from '@/components/AvailabilityCalendar'
 import PaymentForm from '@/components/PaymentForm'
 
+
 interface Service {
   id: string
   name: string
@@ -133,7 +134,45 @@ export default function PublicBookingPage() {  const router = useRouter()
       
       // Create end time
       const endTime = new Date(startTime)
-      endTime.setMinutes(endTime.getMinutes() + service.duration)      // Construct API URL with tenant parameter
+      endTime.setMinutes(endTime.getMinutes() + service.duration)
+
+      // For online payments, don't create appointment yet - just validate and show payment
+      if (paymentMethod === 'ONLINE') {
+        // Validate availability without creating appointment
+        const availabilityResponse = await fetch(`/api/appointments/check-availability?${new URLSearchParams({
+          providerId: selectedProvider,
+          startTime: startTime.toISOString(),
+          endTime: endTime.toISOString(),
+          ...(tenantSlug && { tenant: tenantSlug })
+        })}`)
+
+        if (!availabilityResponse.ok) {
+          setError('Time slot is no longer available')
+          return
+        }
+
+        // Store booking data for after payment completion
+        const bookingData = {
+          serviceId: selectedService,
+          providerId: selectedProvider,
+          startTime: startTime.toISOString(),
+          endTime: endTime.toISOString(),
+          clientName: clientData.name,
+          clientEmail: clientData.email,
+          clientPhone: clientData.phone || null,
+          notes: clientData.notes || null,
+          paymentMethod,
+          service: selectedServiceData,
+          amount: selectedServiceData?.price || 0,
+          tenantSlug: tenantSlug
+        }
+        sessionStorage.setItem('pendingBooking', JSON.stringify(bookingData))
+        setShowPaymentForm(true)
+        return
+      }
+
+      // For cash payments, create appointment immediately
+      // Construct API URL with tenant parameter
       let apiUrl = '/api/appointments/public'
       if (tenantSlug) {
         apiUrl += `?tenant=${tenantSlug}`
@@ -143,7 +182,8 @@ export default function PublicBookingPage() {  const router = useRouter()
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-        },        body: JSON.stringify({
+        },
+        body: JSON.stringify({
           serviceId: selectedService,
           providerId: selectedProvider,
           startTime: startTime.toISOString(),
@@ -159,22 +199,15 @@ export default function PublicBookingPage() {  const router = useRouter()
       const result = await response.json()
 
       if (response.ok) {
-        if (paymentMethod === 'ONLINE' && result.appointment.paymentStatus === 'PENDING') {
-          // For online payments, show payment form
-          setShowPaymentForm(true)
-          // Store appointment data for payment processing
-          sessionStorage.setItem('pendingAppointment', JSON.stringify(result.appointment))
-        } else {
-          // For cash payments or confirmed appointments
-          setSuccess(true)
-          // Reset form
-          setSelectedService('')
-          setSelectedProvider('')
-          setSelectedDate(undefined)
-          setSelectedTime('')
-          setClientData({ name: '', email: '', phone: '', notes: '' })
-          setPaymentMethod('CASH')
-        }
+        // For cash payments, appointment is created immediately
+        setSuccess(true)
+        // Reset form
+        setSelectedService('')
+        setSelectedProvider('')
+        setSelectedDate(undefined)
+        setSelectedTime('')
+        setClientData({ name: '', email: '', phone: '', notes: '' })
+        setPaymentMethod('CASH')
       } else {
         setError(result.error || 'Failed to book appointment')
       }
@@ -258,11 +291,22 @@ export default function PublicBookingPage() {  const router = useRouter()
                   <SelectContent>
                     {services.map((service) => (
                       <SelectItem key={service.id} value={service.id}>
-                        <div className="flex flex-col">
-                          <span className="font-medium">{service.name}</span>
-                          <span className="text-sm text-gray-500">
-                            {service.duration} min - ${service.price} - with {service.provider.name}
-                          </span>
+                        <div className="flex items-center gap-3">
+                          {service.imageUrl && (
+                            <div className="relative w-12 h-12 overflow-hidden rounded-lg flex-shrink-0">
+                              <img 
+                                src={service.imageUrl} 
+                                alt={service.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          )}
+                          <div className="flex flex-col">
+                            <span className="font-medium">{service.name}</span>
+                            <span className="text-sm text-gray-500">
+                              {service.duration} min - ${service.price} - with {service.provider.name}
+                            </span>
+                          </div>
                         </div>
                       </SelectItem>
                     ))}
@@ -270,9 +314,9 @@ export default function PublicBookingPage() {  const router = useRouter()
                 </Select>
               </div>              {/* Service Details */}
               {selectedServiceData && (
-                <div className="p-3 bg-gray-50 rounded-lg space-y-2">
+                <div className="p-4 bg-gray-50 rounded-lg space-y-3">
                   {selectedServiceData.imageUrl && (
-                    <div className="relative w-full h-32 overflow-hidden rounded-lg mb-2">
+                    <div className="relative w-full h-48 overflow-hidden rounded-lg mb-3">
                       <img 
                         src={selectedServiceData.imageUrl} 
                         alt={selectedServiceData.name}
@@ -280,21 +324,24 @@ export default function PublicBookingPage() {  const router = useRouter()
                       />
                     </div>
                   )}
-                  <div className="flex items-center gap-2 text-sm">
-                    <Clock className="w-4 h-4" />
-                    <span>{selectedServiceData.duration} minutes</span>
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-semibold text-gray-900">{selectedServiceData.name}</h3>
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Clock className="w-4 h-4" />
+                      <span>{selectedServiceData.duration} minutes</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <DollarSign className="w-4 h-4" />
+                      <span className="font-medium text-green-600">${selectedServiceData.price}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <User className="w-4 h-4" />
+                      <span>with {selectedServiceData.provider.name}</span>
+                    </div>
+                    {selectedServiceData.description && (
+                      <p className="text-sm text-gray-600 mt-2">{selectedServiceData.description}</p>
+                    )}
                   </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <DollarSign className="w-4 h-4" />
-                    <span>${selectedServiceData.price}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <User className="w-4 h-4" />
-                    <span>with {selectedServiceData.provider.name}</span>
-                  </div>
-                  {selectedServiceData.description && (
-                    <p className="text-sm text-gray-600">{selectedServiceData.description}</p>
-                  )}
                 </div>
               )}
             </CardContent>
@@ -457,7 +504,8 @@ export default function PublicBookingPage() {  const router = useRouter()
             disabled={submitting || !selectedService || !selectedDate || !selectedTime || !clientData.name || !clientData.email}
             className="w-full md:w-auto"
           >
-            {submitting ? 'Booking Appointment...' : 'Book Appointment'}
+            {submitting ? 'Processing...' : 
+             paymentMethod === 'ONLINE' ? 'Continue to Payment' : 'Book Appointment'}
           </Button>
         </div>
       </form>
@@ -466,13 +514,13 @@ export default function PublicBookingPage() {  const router = useRouter()
       {showPaymentForm && (
         <div className="mt-6">
           <PaymentForm
-            appointment={JSON.parse(sessionStorage.getItem('pendingAppointment') || '{}')}
+            bookingData={JSON.parse(sessionStorage.getItem('pendingBooking') || '{}')}
             onSuccess={() => {
               setShowPaymentForm(false)
               setSuccess(true)
-              sessionStorage.removeItem('pendingAppointment')
+              sessionStorage.removeItem('pendingBooking')
             }}
-            onError={(error) => setError(error)}
+            onError={(error: string) => setError(error)}
           />
         </div>
       )}

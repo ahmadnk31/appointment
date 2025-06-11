@@ -45,6 +45,12 @@ model TenantSettings {
   emailSettings    Json?   // Store email notification settings
   paymentSettings  Json?   // Store payment configuration (Stripe keys, etc.)
   cancellationSettings Json? // Store cancellation policies
+  
+  // Stripe Connect fields
+  stripeAccountId  String? // Connected Stripe account ID
+  stripeAccountStatus String? // 'pending', 'active', 'restricted', 'rejected'
+  stripeOnboardingUrl String? // URL for completing Stripe onboarding
+  commissionRate   Float?  @default(0.05) // Platform commission rate (5% default)
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
@@ -251,6 +257,11 @@ model Appointment {
   refundReason         String?
   cancellationReason   String?
   cancelledAt          DateTime?
+  
+  // Platform commission tracking
+  platformCommission  Float?  // Platform commission amount
+  businessRevenue     Float?  // Amount transferred to business
+  stripeTransferId    String? // Transfer ID to connected account
   
   // Google Calendar integration
   calendarEventId      String?

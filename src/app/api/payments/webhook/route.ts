@@ -39,7 +39,8 @@ export async function POST(request: NextRequest) {
         })
 
         if (appointment) {
-          await prisma.appointment.update({
+          // Update appointment status
+          const updatedAppointment = await prisma.appointment.update({
             where: {
               id: appointment.id
             },
@@ -49,6 +50,31 @@ export async function POST(request: NextRequest) {
               status: 'CONFIRMED', // Auto-confirm on successful payment
             }
           })
+
+          // Record the transfer ID if this was a Connect payment
+          if (paymentIntent.transfer_data?.destination) {
+            try {
+              // Get the transfer - ensure destination is a string
+              const destinationId = typeof paymentIntent.transfer_data.destination === 'string' 
+                ? paymentIntent.transfer_data.destination 
+                : paymentIntent.transfer_data.destination.id
+              
+              const transfer = await stripe.transfers.list({
+                destination: destinationId,
+                limit: 1,
+              })
+              
+              if (transfer.data.length > 0) {
+                await prisma.appointment.update({
+                  where: { id: appointment.id },
+                  data: { stripeTransferId: transfer.data[0].id }
+                })
+              }
+            } catch (transferError) {
+              console.error('Error recording transfer ID:', transferError)
+              // Don't fail the payment confirmation for this
+            }
+          }
 
           // Send payment confirmation email
           try {

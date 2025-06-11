@@ -8,12 +8,22 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { CreditCard, CheckCircle, AlertCircle } from 'lucide-react'
 
 interface PaymentFormProps {
-  appointment: {
-    id: string
-    paymentAmount: number
+  bookingData: {
+    serviceId: string
+    providerId: string
+    startTime: string
+    endTime: string
+    clientName: string
+    clientEmail: string
+    clientPhone: string | null
+    notes: string | null
+    paymentMethod: string
     service: {
       name: string
+      price: number
     }
+    amount: number
+    tenantSlug?: string
   }
   onSuccess: () => void
   onError: (error: string) => void
@@ -21,7 +31,7 @@ interface PaymentFormProps {
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
-export default function PaymentForm({ appointment, onSuccess, onError }: PaymentFormProps) {
+export default function PaymentForm({ bookingData, onSuccess, onError }: PaymentFormProps) {
   const [processing, setProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -35,6 +45,39 @@ export default function PaymentForm({ appointment, onSuccess, onError }: Payment
     setError(null)
 
     try {
+      // First create the appointment
+      let createAppointmentUrl = '/api/appointments/public'
+      if (bookingData.tenantSlug) {
+        createAppointmentUrl += `?tenant=${bookingData.tenantSlug}`
+      }
+
+      const appointmentResponse = await fetch(createAppointmentUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          serviceId: bookingData.serviceId,
+          providerId: bookingData.providerId,
+          startTime: bookingData.startTime,
+          endTime: bookingData.endTime,
+          clientName: bookingData.clientName,
+          clientEmail: bookingData.clientEmail,
+          clientPhone: bookingData.clientPhone,
+          notes: bookingData.notes,
+          paymentMethod: 'ONLINE',
+        }),
+      })
+
+      if (!appointmentResponse.ok) {
+        const appointmentError = await appointmentResponse.json()
+        setError(appointmentError.error || 'Failed to create appointment')
+        return
+      }
+
+      const appointmentResult = await appointmentResponse.json()
+      const appointment = appointmentResult.appointment
+
       // Create payment intent
       const response = await fetch('/api/payments/create-intent', {
         method: 'POST',
@@ -43,7 +86,7 @@ export default function PaymentForm({ appointment, onSuccess, onError }: Payment
         },
         body: JSON.stringify({
           appointmentId: appointment.id,
-          amount: appointment.paymentAmount,
+          amount: bookingData.amount,
         }),
       })
 
@@ -60,8 +103,7 @@ export default function PaymentForm({ appointment, onSuccess, onError }: Payment
         return
       }
 
-      // Redirect to Stripe Checkout or use Elements
-      // For simplicity, we'll use confirmPayment with a redirect
+      // Redirect to Stripe payment
       const { error: stripeError } = await stripe.confirmPayment({
         clientSecret,
         confirmParams: {
@@ -89,7 +131,7 @@ export default function PaymentForm({ appointment, onSuccess, onError }: Payment
           Complete Payment
         </CardTitle>
         <CardDescription>
-          Secure payment for {appointment.service.name}
+          Complete payment to confirm your appointment for {bookingData.service.name}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -105,19 +147,19 @@ export default function PaymentForm({ appointment, onSuccess, onError }: Payment
         <div className="p-4 bg-gray-50 rounded-lg">
           <div className="flex justify-between items-center">
             <span className="font-medium">Service:</span>
-            <span>{appointment.service.name}</span>
+            <span>{bookingData.service.name}</span>
           </div>
           <div className="flex justify-between items-center mt-2">
             <span className="font-medium">Total Amount:</span>
             <span className="text-xl font-bold text-green-600">
-              ${appointment.paymentAmount}
+              ${bookingData.amount}
             </span>
           </div>
         </div>
 
         <div className="space-y-2">
           <p className="text-sm text-gray-600">
-            Your payment will be processed securely through Stripe. You will be redirected to complete the payment.
+            Complete your payment to confirm and book your appointment. Your appointment will be automatically created after successful payment.
           </p>
           <div className="flex gap-2 text-xs text-gray-500">
             <CheckCircle className="w-4 h-4" />
@@ -131,7 +173,7 @@ export default function PaymentForm({ appointment, onSuccess, onError }: Payment
           className="w-full"
           size="lg"
         >
-          {processing ? 'Processing...' : `Pay $${appointment.paymentAmount}`}
+          {processing ? 'Processing...' : `Pay $${bookingData.amount} & Book Appointment`}
         </Button>
 
         <p className="text-xs text-center text-gray-500">
