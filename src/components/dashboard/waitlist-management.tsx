@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Clock, Users, Plus, Edit, Trash2, Bell, Calendar, User, MapPin } from 'lucide-react';
+import { Clock, Users, Plus, Edit, Trash2, Bell, Calendar, User } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 
@@ -396,7 +396,7 @@ export default function WaitlistManagement() {
                         <SelectValue placeholder="All services" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All services</SelectItem>
+                        <SelectItem value="all">All services</SelectItem>
                         {services.map(service => (
                           <SelectItem key={service.id} value={service.id}>
                             {service.name}
@@ -416,7 +416,7 @@ export default function WaitlistManagement() {
                         <SelectValue placeholder="All providers" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All providers</SelectItem>
+                        <SelectItem value="all">All providers</SelectItem>
                         {providers.map(provider => (
                           <SelectItem key={provider.id} value={provider.id}>
                             {provider.name}
@@ -526,7 +526,7 @@ export default function WaitlistManagement() {
                         <SelectValue placeholder="Any provider" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Any provider</SelectItem>
+                        <SelectItem value="all">Any provider</SelectItem>
                         {providers.map(provider => (
                           <SelectItem key={provider.id} value={provider.id}>
                             {provider.name}
@@ -558,7 +558,7 @@ export default function WaitlistManagement() {
                         <SelectValue placeholder="Any time" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Any time</SelectItem>
+                        <SelectItem value="any">Any time</SelectItem>
                         {timeSlotOptions.map(option => (
                           <SelectItem key={option.value} value={option.value}>
                             {option.label}

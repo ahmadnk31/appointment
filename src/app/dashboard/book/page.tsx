@@ -135,9 +135,9 @@ export default function BookAppointmentPage() {
   const selectedServiceData = services.find(s => s.id === selectedService)
 
   return (
-    <div className="container mx-auto p-6 max-w-2xl">
+    <div className="container mx-auto p-4 lg:p-6 max-w-2xl">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">Book Appointment</h1>
+        <h1 className="text-2xl lg:text-3xl font-bold">Book Appointment</h1>
         <p className="text-gray-600">Schedule your next appointment</p>
       </div>
 
@@ -173,7 +173,7 @@ export default function BookAppointmentPage() {
               </Select>
               {selectedServiceData && (
                 <div className="p-3 bg-blue-50 rounded-lg">
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm">
                     <span className="flex items-center">
                       <Clock className="w-4 h-4 mr-1" />
                       {selectedServiceData.duration} minutes

@@ -227,21 +227,23 @@ export default function UsersPage() {
           users.map((user) => (
             <Card key={user.id}>
               <CardHeader>
-                <div className="flex justify-between items-start">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <CardTitle>{user.name}</CardTitle>
-                      <Badge className={getRoleColor(user.role)}>
-                        {user.role}
-                      </Badge>
-                      <Badge variant={user.isActive ? "default" : "secondary"}>
-                        {user.isActive ? 'Active' : 'Inactive'}
-                      </Badge>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+                      <CardTitle className="text-lg sm:text-xl">{user.name}</CardTitle>
+                      <div className="flex gap-2">
+                        <Badge className={getRoleColor(user.role)}>
+                          {user.role}
+                        </Badge>
+                        <Badge variant={user.isActive ? "default" : "secondary"}>
+                          {user.isActive ? 'Active' : 'Inactive'}
+                        </Badge>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600">
                       <span className="flex items-center gap-1">
                         <Mail className="w-4 h-4" />
-                        {user.email}
+                        <span className="break-all">{user.email}</span>
                       </span>
                       {user.phone && (
                         <span className="flex items-center gap-1">
@@ -251,33 +253,40 @@ export default function UsersPage() {
                       )}
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                     <Button 
                       variant="outline" 
                       size="sm"
                       onClick={() => handleEdit(user)}
+                      className="w-full sm:w-auto"
                     >
-                      <Edit className="w-4 h-4" />
+                      <Edit className="w-4 h-4 sm:mr-0 mr-2" />
+                      <span className="sm:hidden">Edit</span>
                     </Button>
                     <Button 
                       variant="outline" 
                       size="sm"
                       onClick={() => toggleUserStatus(user.id, user.isActive)}
+                      className="w-full sm:w-auto"
                     >
-                      {user.isActive ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
+                      {user.isActive ? <UserX className="w-4 h-4 sm:mr-0 mr-2" /> : <UserCheck className="w-4 h-4 sm:mr-0 mr-2" />}
+                      <span className="sm:hidden">{user.isActive ? 'Deactivate' : 'Activate'}</span>
                     </Button>
                     <Button 
                       variant="outline" 
                       size="sm"
                       onClick={() => handleDeleteClick(user.id)}
                       disabled={user.id === session?.user?.id}
+                      className="w-full sm:w-auto"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4 sm:mr-0 mr-2" />
+                      <span className="sm:hidden">Delete</span>
                     </Button>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>                <div className="grid md:grid-cols-1 gap-4">
+              <CardContent>
+                <div className="grid grid-cols-1 gap-4">
                   <div>
                     <h4 className="font-semibold mb-1">Member Since</h4>
                     <p className="text-sm text-gray-600">

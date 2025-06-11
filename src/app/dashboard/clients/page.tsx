@@ -235,13 +235,13 @@ export default function ClientsPage() {
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="container mx-auto p-4 lg:p-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Clients</h1>
+          <h1 className="text-2xl lg:text-3xl font-bold">Clients</h1>
           <p className="text-gray-600">Manage your clients and view their appointment history</p>
         </div>
-        <Button onClick={() => setIsDialogOpen(true)}>
+        <Button onClick={() => setIsDialogOpen(true)} className="w-full sm:w-auto">
           <Plus className="w-4 h-4 mr-2" />
           Add Client
         </Button>
@@ -286,18 +286,18 @@ export default function ClientsPage() {
           filteredClients.map((client) => (
             <Card key={client.id}>
               <CardHeader>
-                <div className="flex justify-between items-start">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <CardTitle>{client.name}</CardTitle>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+                      <CardTitle className="text-lg sm:text-xl">{client.name}</CardTitle>
                       <Badge variant={client.isActive ? "default" : "secondary"}>
                         {client.isActive ? 'Active' : 'Inactive'}
                       </Badge>
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600">
                       <span className="flex items-center gap-1">
                         <Mail className="w-4 h-4" />
-                        {client.email}
+                        <span className="break-all">{client.email}</span>
                       </span>
                       {client.phone && (
                         <span className="flex items-center gap-1">
@@ -307,33 +307,39 @@ export default function ClientsPage() {
                       )}
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-row sm:flex-col lg:flex-row gap-2 w-full sm:w-auto">
                     <Button 
                       variant="outline" 
                       size="sm"
                       onClick={() => handleView(client)}
+                      className="flex-1 sm:flex-none"
                     >
-                      <Eye className="w-4 h-4" />
+                      <Eye className="w-4 h-4 sm:mr-0 mr-2" />
+                      <span className="sm:hidden lg:inline">View</span>
                     </Button>
                     <Button 
                       variant="outline" 
                       size="sm"
                       onClick={() => handleEdit(client)}
+                      className="flex-1 sm:flex-none"
                     >
-                      <Edit className="w-4 h-4" />
+                      <Edit className="w-4 h-4 sm:mr-0 mr-2" />
+                      <span className="sm:hidden lg:inline">Edit</span>
                     </Button>
                     <Button 
                       variant="outline" 
                       size="sm"
                       onClick={() => handleDeleteClick(client.id)}
+                      className="flex-1 sm:flex-none"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4 sm:mr-0 mr-2" />
+                      <span className="sm:hidden lg:inline">Delete</span>
                     </Button>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <h4 className="font-semibold mb-1">Client Since</h4>
                     <p className="text-sm text-gray-600">

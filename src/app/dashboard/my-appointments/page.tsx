@@ -111,28 +111,31 @@ export default function MyAppointmentsPage() {
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="container mx-auto p-4 lg:p-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold">My Appointments</h1>
+          <h1 className="text-2xl lg:text-3xl font-bold">My Appointments</h1>
           <p className="text-gray-600">View and manage your appointments</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button
             variant={filter === 'all' ? 'default' : 'outline'}
             onClick={() => setFilter('all')}
+            size="sm"
           >
             All
           </Button>
           <Button
             variant={filter === 'upcoming' ? 'default' : 'outline'}
             onClick={() => setFilter('upcoming')}
+            size="sm"
           >
             Upcoming
           </Button>
           <Button
             variant={filter === 'past' ? 'default' : 'outline'}
             onClick={() => setFilter('past')}
+            size="sm"
           >
             Past
           </Button>
@@ -163,15 +166,15 @@ export default function MyAppointmentsPage() {
             .map((appointment) => (
               <Card key={appointment.id}>
                 <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        {appointment.service.name}
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+                    <div className="flex-1">
+                      <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-2">
+                        <span>{appointment.service.name}</span>
                         <Badge className={getStatusColor(appointment.status)}>
                           {appointment.status}
                         </Badge>
                       </CardTitle>
-                      <CardDescription className="flex items-center gap-4 mt-2">
+                      <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-2">
                         <span className="flex items-center gap-1">
                           <Calendar className="w-4 h-4" />
                           {format(new Date(appointment.startTime), 'MMM dd, yyyy')}
@@ -189,6 +192,7 @@ export default function MyAppointmentsPage() {
                         variant="outline" 
                         size="sm"
                         onClick={() => cancelAppointment(appointment.id)}
+                        className="w-full sm:w-auto"
                       >
                         Cancel
                       </Button>
@@ -196,7 +200,7 @@ export default function MyAppointmentsPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <div>
                       <h4 className="font-semibold mb-2 flex items-center gap-2">
                         <User className="w-4 h-4" />
@@ -229,7 +233,7 @@ export default function MyAppointmentsPage() {
                   )}
 
                   {/* Appointment Actions */}
-                  <div className="flex justify-between items-center mt-4 pt-4 border-t">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-4 pt-4 border-t">
                     <div className="text-sm text-gray-500">
                       {appointment.status === 'SCHEDULED' && new Date(appointment.startTime) > new Date() && (
                         <span className="text-blue-600">
@@ -237,14 +241,14 @@ export default function MyAppointmentsPage() {
                         </span>
                       )}
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                       {appointment.status === 'SCHEDULED' && (
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" className="w-full sm:w-auto">
                           Reschedule
                         </Button>
                       )}
                       {appointment.status === 'COMPLETED' && (
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" className="w-full sm:w-auto">
                           Book Again
                         </Button>
                       )}

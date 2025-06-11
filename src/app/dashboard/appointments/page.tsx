@@ -261,13 +261,13 @@ export default function AppointmentsPage() {
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="container mx-auto p-4 lg:p-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Appointments</h1>
+          <h1 className="text-2xl lg:text-3xl font-bold">Appointments</h1>
           <p className="text-gray-600">Manage your appointments</p>
         </div>
-        <Button onClick={() => setIsDialogOpen(true)}>
+        <Button onClick={() => setIsDialogOpen(true)} className="w-full sm:w-auto">
           <Plus className="w-4 h-4 mr-2" />
           New Appointment
         </Button>
@@ -298,7 +298,7 @@ export default function AppointmentsPage() {
                         {appointment.status}
                       </Badge>
                     </CardTitle>
-                    <CardDescription className="flex items-center gap-4 mt-2">
+                    <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-2">
                       <span className="flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
                         {format(new Date(appointment.startTime), 'MMM dd, yyyy')}
@@ -310,26 +310,30 @@ export default function AppointmentsPage() {
                       </span>
                     </CardDescription>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <Button 
                       variant="outline" 
                       size="sm"
                       onClick={() => handleEdit(appointment)}
+                      className="w-full sm:w-auto"
                     >
-                      <Edit className="w-4 h-4" />
+                      <Edit className="w-4 h-4 sm:mr-0 mr-2" />
+                      <span className="sm:hidden">Edit</span>
                     </Button>
                     <Button 
                       variant="outline" 
                       size="sm"
                       onClick={() => handleDeleteClick(appointment.id)}
+                      className="w-full sm:w-auto"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4 sm:mr-0 mr-2" />
+                      <span className="sm:hidden">Delete</span>
                     </Button>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div>
                     <h4 className="font-semibold mb-1">Service</h4>
                     <p className="text-sm text-gray-600">{appointment.service.name}</p>

@@ -181,14 +181,17 @@ export default function Dashboard() {
       </div>
 
       {/* Main Dashboard Content */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="recurring">Recurring</TabsTrigger>
-          <TabsTrigger value="waitlist">Waitlist</TabsTrigger>
-          <TabsTrigger value="quick-actions">Quick Actions</TabsTrigger>
-          <TabsTrigger value="activity">Recent Activity</TabsTrigger>
-        </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <div className="w-full overflow-x-auto">
+          <TabsList className="flex w-max min-w-full h-auto gap-1 p-1">
+            <TabsTrigger value="overview" className="text-xs sm:text-sm whitespace-nowrap">Overview</TabsTrigger>
+            <TabsTrigger value="analytics" className="text-xs sm:text-sm whitespace-nowrap">Analytics</TabsTrigger>
+            <TabsTrigger value="recurring" className="text-xs sm:text-sm whitespace-nowrap">Recurring</TabsTrigger>
+            <TabsTrigger value="waitlist" className="text-xs sm:text-sm whitespace-nowrap">Waitlist</TabsTrigger>
+            <TabsTrigger value="quick-actions" className="text-xs sm:text-sm whitespace-nowrap">Actions</TabsTrigger>
+            <TabsTrigger value="activity" className="text-xs sm:text-sm whitespace-nowrap">Activity</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="overview" className="space-y-6">
           {/* Stats Cards */}
