@@ -216,9 +216,10 @@ export async function PUT(
 // DELETE /api/waitlist/[id] - Remove from waitlist
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -236,7 +237,7 @@ export async function DELETE(
     // Find existing waitlist entry
     const existingEntry = await prisma.waitlist.findFirst({
       where: {
-        id: params.id,
+        id: id,
         tenantId: user.tenantId,
         ...(user.role === 'CLIENT' ? { clientId: session.user.id } : {}),
         ...(user.role === 'PROVIDER' ? { providerId: session.user.id } : {})
@@ -254,7 +255,7 @@ export async function DELETE(
 
     // Delete the waitlist entry
     await prisma.waitlist.delete({
-      where: { id: params.id }
+      where: { id: id }
     });
 
     // Create notification
@@ -271,7 +272,7 @@ export async function DELETE(
           userId: notificationUserId,
           tenantId: user.tenantId,
           data: JSON.stringify({
-            waitlistId: params.id,
+            waitlistId: id,
             serviceName: existingEntry.service.name,
             clientName: existingEntry.client.name
           })
