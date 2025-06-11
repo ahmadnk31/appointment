@@ -261,19 +261,19 @@ export default function AppointmentsPage() {
   }
 
   return (
-    <div className="container mx-auto p-4 lg:p-6">
+    <div className="w-full max-w-7xl mx-auto p-4 lg:p-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-bold">Appointments</h1>
+        <div className="min-w-0 flex-1">
+          <h1 className="text-2xl lg:text-3xl font-bold truncate">Appointments</h1>
           <p className="text-gray-600">Manage your appointments</p>
         </div>
-        <Button onClick={() => setIsDialogOpen(true)} className="w-full sm:w-auto">
+        <Button onClick={() => setIsDialogOpen(true)} className="w-full sm:w-auto flex-shrink-0">
           <Plus className="w-4 h-4 mr-2" />
           New Appointment
         </Button>
       </div>
 
-      <div className="grid gap-4">
+      <div className="space-y-4">{/* Changed from grid gap-4 to space-y-4 for better mobile spacing */}
         {appointments.length === 0 ? (
           <Card>
             <CardContent className="p-6 text-center">
@@ -288,37 +288,39 @@ export default function AppointmentsPage() {
           </Card>
         ) : (
           appointments.map((appointment) => (
-            <Card key={appointment.id}>
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      {getAppointmentTitle(appointment)}
-                      <Badge className={getStatusColor(appointment.status)}>
+            <Card key={appointment.id} className="w-full">
+              <CardHeader className="pb-3">
+                <div className="flex flex-col gap-4 lg:flex-row lg:justify-between lg:items-start">
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+                      <span className="truncate">{getAppointmentTitle(appointment)}</span>
+                      <Badge className={`${getStatusColor(appointment.status)} self-start sm:self-auto`}>
                         {appointment.status}
                       </Badge>
                     </CardTitle>
-                    <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-2">
-                      <span className="flex items-center gap-1">
+                    <CardDescription className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                      <span className="flex items-center gap-1 flex-shrink-0">
                         <Calendar className="w-4 h-4" />
-                        {format(new Date(appointment.startTime), 'MMM dd, yyyy')}
+                        <span className="whitespace-nowrap">{format(new Date(appointment.startTime), 'MMM dd, yyyy')}</span>
                       </span>
-                      <span className="flex items-center gap-1">
+                      <span className="flex items-center gap-1 flex-shrink-0">
                         <Clock className="w-4 h-4" />
-                        {format(new Date(appointment.startTime), 'HH:mm')} - 
-                        {format(new Date(appointment.endTime), 'HH:mm')}
+                        <span className="whitespace-nowrap">
+                          {format(new Date(appointment.startTime), 'HH:mm')} - 
+                          {format(new Date(appointment.endTime), 'HH:mm')}
+                        </span>
                       </span>
                     </CardDescription>
                   </div>
-                  <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2 lg:flex-shrink-0">
                     <Button 
                       variant="outline" 
                       size="sm"
                       onClick={() => handleEdit(appointment)}
                       className="w-full sm:w-auto"
                     >
-                      <Edit className="w-4 h-4 sm:mr-0 mr-2" />
-                      <span className="sm:hidden">Edit</span>
+                      <Edit className="w-4 h-4 mr-2" />
+                      <span className="sm:inline lg:hidden xl:inline">Edit</span>
                     </Button>
                     <Button 
                       variant="outline" 
@@ -326,40 +328,41 @@ export default function AppointmentsPage() {
                       onClick={() => handleDeleteClick(appointment.id)}
                       className="w-full sm:w-auto"
                     >
-                      <Trash2 className="w-4 h-4 sm:mr-0 mr-2" />
-                      <span className="sm:hidden">Delete</span>
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      <span className="sm:inline lg:hidden xl:inline">Delete</span>
                     </Button>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-0">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div>
+                  <div className="min-w-0">
                     <h4 className="font-semibold mb-1">Service</h4>
-                    <p className="text-sm text-gray-600">{appointment.service.name}</p>
+                    <p className="text-sm text-gray-600 truncate">{appointment.service.name}</p>
                     <p className="text-sm text-gray-500">{appointment.service.duration} minutes</p>
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <h4 className="font-semibold mb-1">Client</h4>
-                    <p className="text-sm text-gray-600">{appointment.client.name}</p>
-                    <p className="text-sm text-gray-500">{appointment.client.email}</p>
+                    <p className="text-sm text-gray-600 truncate">{appointment.client.name}</p>
+                    <p className="text-sm text-gray-500 break-all">{appointment.client.email}</p>
                   </div>
-                  <div>
+                  <div className="min-w-0 sm:col-span-2 lg:col-span-1">
                     <h4 className="font-semibold mb-1">Provider</h4>
-                    <p className="text-sm text-gray-600">{appointment.provider.name}</p>
+                    <p className="text-sm text-gray-600 truncate">{appointment.provider.name}</p>
                   </div>
                 </div>
                 {appointment.notes && (
                   <div className="mt-4">
                     <h4 className="font-semibold mb-1">Notes</h4>
-                    <p className="text-sm text-gray-600">{appointment.notes}</p>
+                    <p className="text-sm text-gray-600 break-words">{appointment.notes}</p>
                   </div>
                 )}
                 {(appointment.status === 'PENDING' || appointment.status === 'CONFIRMED') && (
-                  <div className="flex gap-2 mt-4">
+                  <div className="flex flex-col sm:flex-row gap-2 mt-4">
                     <Button 
                       size="sm" 
                       onClick={() => updateAppointmentStatus(appointment.id, 'COMPLETED')}
+                      className="w-full sm:w-auto"
                     >
                       Mark Complete
                     </Button>
@@ -367,6 +370,7 @@ export default function AppointmentsPage() {
                       variant="outline" 
                       size="sm"
                       onClick={() => updateAppointmentStatus(appointment.id, 'CANCELLED')}
+                      className="w-full sm:w-auto"
                     >
                       Cancel
                     </Button>
@@ -380,7 +384,7 @@ export default function AppointmentsPage() {
 
       {/* New/Edit Appointment Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md mx-4 sm:mx-auto">
           <DialogHeader>
             <DialogTitle>{editingAppointment ? 'Edit Appointment' : 'New Appointment'}</DialogTitle>
             <DialogDescription>
@@ -398,7 +402,10 @@ export default function AppointmentsPage() {
                   <SelectContent>
                     {services.map((service) => (
                       <SelectItem key={service.id} value={service.id}>
-                        {service.name} ({service.duration} min - ${service.price})
+                        <div className="flex flex-col">
+                          <span>{service.name}</span>
+                          <span className="text-xs text-gray-500">({service.duration} min - ${service.price})</span>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -414,7 +421,10 @@ export default function AppointmentsPage() {
                   <SelectContent>
                     {users.filter(user => user.role === 'CLIENT').map((client) => (
                       <SelectItem key={client.id} value={client.id}>
-                        {client.name} ({client.email})
+                        <div className="flex flex-col">
+                          <span>{client.name}</span>
+                          <span className="text-xs text-gray-500 break-all">{client.email}</span>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -430,14 +440,17 @@ export default function AppointmentsPage() {
                   <SelectContent>
                     {users.filter(user => user.role === 'PROVIDER' || user.role === 'ADMIN').map((provider) => (
                       <SelectItem key={provider.id} value={provider.id}>
-                        {provider.name} ({provider.role})
+                        <div className="flex flex-col">
+                          <span>{provider.name}</span>
+                          <span className="text-xs text-gray-500">({provider.role})</span>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="startTime">Start Time</Label>
                   <Input
@@ -471,11 +484,11 @@ export default function AppointmentsPage() {
                 />
               </div>
             </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+            <DialogFooter className="flex flex-col sm:flex-row gap-2">
+              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="w-full sm:w-auto order-2 sm:order-1">
                 Cancel
               </Button>
-              <Button type="submit">
+              <Button type="submit" className="w-full sm:w-auto order-1 sm:order-2">
                 {editingAppointment ? 'Update Appointment' : 'Create Appointment'}
               </Button>
             </DialogFooter>

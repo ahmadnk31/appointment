@@ -365,16 +365,16 @@ export default function WaitlistManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold">Waitlist Management</h2>
+          <h2 className="text-xl lg:text-2xl font-bold">Waitlist Management</h2>
           <p className="text-gray-600">Manage appointment waitlist and notify clients of available slots</p>
         </div>
 
-        <div className="flex space-x-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <Dialog open={isNotifyDialogOpen} onOpenChange={setIsNotifyDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" onClick={resetNotifyForm}>
+              <Button variant="outline" onClick={resetNotifyForm} className="w-full sm:w-auto">
                 <Bell className="h-4 w-4 mr-2" />
                 Notify Waitlist
               </Button>
@@ -382,67 +382,67 @@ export default function WaitlistManagement() {
             <DialogContent className="max-w-xl">
               <DialogHeader>
                 <DialogTitle>Notify Waitlist of Available Slots</DialogTitle>
-              </DialogHeader>
+              </DialogHeader>                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="notifyServiceId">Service</Label>
+                      <Select
+                        value={notifyData.serviceId}
+                        onValueChange={(value) => setNotifyData(prev => ({ ...prev, serviceId: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="All services" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All services</SelectItem>
+                          {services.map(service => (
+                            <SelectItem key={service.id} value={service.id}>
+                              {service.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="notifyServiceId">Service</Label>
-                    <Select
-                      value={notifyData.serviceId}
-                      onValueChange={(value) => setNotifyData(prev => ({ ...prev, serviceId: value }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="All services" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All services</SelectItem>
-                        {services.map(service => (
-                          <SelectItem key={service.id} value={service.id}>
-                            {service.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div>
+                      <Label htmlFor="notifyProviderId">Provider</Label>
+                      <Select
+                        value={notifyData.providerId}
+                        onValueChange={(value) => setNotifyData(prev => ({ ...prev, providerId: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="All providers" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All providers</SelectItem>
+                          {providers.map(provider => (
+                            <SelectItem key={provider.id} value={provider.id}>
+                              {provider.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-
-                  <div>
-                    <Label htmlFor="notifyProviderId">Provider</Label>
-                    <Select
-                      value={notifyData.providerId}
-                      onValueChange={(value) => setNotifyData(prev => ({ ...prev, providerId: value }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="All providers" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All providers</SelectItem>
-                        {providers.map(provider => (
-                          <SelectItem key={provider.id} value={provider.id}>
-                            {provider.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
 
                 <div>
                   <Label>Available Time Slots</Label>
                   <div className="space-y-2 mt-2">
                     {notifyData.availableSlots.map((slot, index) => (
-                      <div key={index} className="flex items-center space-x-2">
+                      <div key={index} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                         <Input
                           type="datetime-local"
                           placeholder="Start time"
                           value={slot.startTime}
                           onChange={(e) => updateTimeSlot(index, 'startTime', e.target.value)}
+                          className="flex-1"
                         />
                         <Input
                           type="datetime-local"
                           placeholder="End time"
                           value={slot.endTime}
                           onChange={(e) => updateTimeSlot(index, 'endTime', e.target.value)}
+                          className="flex-1"
                         />
                         {notifyData.availableSlots.length > 1 && (
                           <Button
@@ -450,6 +450,7 @@ export default function WaitlistManagement() {
                             variant="outline"
                             size="sm"
                             onClick={() => removeTimeSlot(index)}
+                            className="w-full sm:w-auto"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -461,6 +462,7 @@ export default function WaitlistManagement() {
                       variant="outline"
                       size="sm"
                       onClick={addTimeSlot}
+                      className="w-full sm:w-auto"
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Add Time Slot
@@ -468,11 +470,11 @@ export default function WaitlistManagement() {
                   </div>
                 </div>
 
-                <div className="flex justify-end space-x-2">
-                  <Button type="button" variant="outline" onClick={() => setIsNotifyDialogOpen(false)}>
+                <div className="flex flex-col sm:flex-row justify-end gap-2">
+                  <Button type="button" variant="outline" onClick={() => setIsNotifyDialogOpen(false)} className="w-full sm:w-auto">
                     Cancel
                   </Button>
-                  <Button onClick={handleNotifyWaitlist}>
+                  <Button onClick={handleNotifyWaitlist} className="w-full sm:w-auto">
                     <Bell className="h-4 w-4 mr-2" />
                     Notify Waitlist
                   </Button>
@@ -483,7 +485,7 @@ export default function WaitlistManagement() {
 
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={resetForm}>
+              <Button onClick={resetForm} className="w-full sm:w-auto">
                 <Plus className="h-4 w-4 mr-2" />
                 Join Waitlist
               </Button>
@@ -496,7 +498,7 @@ export default function WaitlistManagement() {
               </DialogHeader>
 
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="serviceId">Service *</Label>
                     <Select
@@ -537,7 +539,7 @@ export default function WaitlistManagement() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="preferredDate">Preferred Date</Label>
                     <Input
@@ -569,7 +571,7 @@ export default function WaitlistManagement() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex items-center space-x-2">
                     <Switch
                       id="flexibleDates"
@@ -626,9 +628,9 @@ export default function WaitlistManagement() {
       </div>
 
       {/* Filters */}
-      <div className="flex space-x-4">
+      <div className="flex flex-col sm:flex-row gap-4">
         <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-48">
+          <SelectTrigger className="w-full sm:w-48">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -642,7 +644,7 @@ export default function WaitlistManagement() {
         </Select>
 
         <Select value={filterService} onValueChange={setFilterService}>
-          <SelectTrigger className="w-48">
+          <SelectTrigger className="w-full sm:w-48">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -672,25 +674,27 @@ export default function WaitlistManagement() {
           filteredEntries.map((entry) => (
             <Card key={entry.id}>
               <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <Users className="h-5 w-5" />
-                      {entry.client.name}
-                      <Badge variant={statusColors[entry.status]}>
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-2">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-5 w-5 flex-shrink-0" />
+                        <span className="truncate">{entry.client.name}</span>
+                      </div>
+                      <Badge variant={statusColors[entry.status]} className="self-start sm:self-auto">
                         {entry.status}
                       </Badge>
                     </CardTitle>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-600 mt-1">
                       {entry.service.name} - ${entry.service.price}
                     </p>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                     <Select
                       value={entry.status}
                       onValueChange={(value) => handleStatusUpdate(entry.id, value)}
                     >
-                      <SelectTrigger className="w-32">
+                      <SelectTrigger className="w-full sm:w-32">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -701,40 +705,46 @@ export default function WaitlistManagement() {
                         <SelectItem value="EXPIRED">Expired</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEdit(entry)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDelete(entry.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(entry)}
+                        className="flex-1 sm:flex-none"
+                      >
+                        <Edit className="h-4 w-4" />
+                        <span className="ml-1 sm:hidden">Edit</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDelete(entry.id)}
+                        className="flex-1 sm:flex-none"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span className="ml-1 sm:hidden">Delete</span>
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <div className="flex items-center text-sm">
-                      <User className="h-4 w-4 mr-2 text-gray-500" />
-                      <span>{entry.client.email}</span>
+                    <div className="flex items-start text-sm">
+                      <User className="h-4 w-4 mr-2 text-gray-500 flex-shrink-0 mt-0.5" />
+                      <span className="break-all">{entry.client.email}</span>
                     </div>
                     {entry.client.phone && (
                       <div className="flex items-center text-sm">
-                        <span className="text-gray-500 mr-2">📞</span>
-                        <span>{entry.client.phone}</span>
+                        <span className="text-gray-500 mr-2 flex-shrink-0">📞</span>
+                        <span className="break-all">{entry.client.phone}</span>
                       </div>
                     )}
                     {entry.provider && (
-                      <div className="flex items-center text-sm">
-                        <User className="h-4 w-4 mr-2 text-gray-500" />
-                        <span>Provider: {entry.provider.name}</span>
+                      <div className="flex items-start text-sm">
+                        <User className="h-4 w-4 mr-2 text-gray-500 flex-shrink-0 mt-0.5" />
+                        <span className="break-words">Provider: {entry.provider.name}</span>
                       </div>
                     )}
                   </div>

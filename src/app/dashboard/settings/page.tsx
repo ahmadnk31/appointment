@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Building2, Mail, Clock, Settings as SettingsIcon, Save, AlertCircle } from 'lucide-react'
+import { Building2, Mail, Clock, Settings as SettingsIcon, Save, AlertCircle, User } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
 interface TenantSettings {
@@ -419,73 +419,199 @@ export default function TenantSettingsPage() {
       )}
 
       {session.user.role === 'PROVIDER' ? (
-        // Provider view - only payment settings
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <SettingsIcon className="w-5 h-5" />
-              Payment Settings
-            </CardTitle>
-            <CardDescription>
-              Connect your Stripe account to receive payments from clients
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Stripe Connect Section */}
-            <div className="space-y-4 p-4 border rounded-lg bg-blue-50">
-              <h4 className="font-medium text-blue-900">Stripe Connect - Payment Processing</h4>
-              <p className="text-sm text-blue-800">
-                Connect your business to Stripe to accept online payments. Platform fee: 5% + Stripe fees
-              </p>
-              
-              {stripeConnectStatus ? (
-                <div className="space-y-3">
-                  {stripeConnectStatus.connected ? (
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-3 h-3 rounded-full ${
-                          stripeConnectStatus.status === 'active' ? 'bg-green-500' : 
-                          stripeConnectStatus.status === 'restricted' ? 'bg-yellow-500' : 'bg-red-500'
-                        }`} />
-                        <span className="text-sm font-medium">
-                          Status: {stripeConnectStatus.status === 'active' ? 'Active' : 
-                                  stripeConnectStatus.status === 'restricted' ? 'Setup Required' : 'Pending'}
-                        </span>
-                      </div>
-                      
-                      {stripeConnectStatus.status !== 'active' && (
-                        <div className="text-sm text-orange-600">
-                          Your Stripe account needs additional setup to accept payments.
-                          <Button 
-                            variant="link" 
-                            className="p-0 h-auto text-orange-600"
-                            onClick={() => window.open('https://dashboard.stripe.com', '_blank')}
-                          >
-                            Complete setup in Stripe Dashboard
-                          </Button>
+        // Provider view - personal settings and payment settings
+        <Tabs defaultValue="profile" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-3">
+            <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger value="payment">Payment</TabsTrigger>
+            <TabsTrigger value="availability">Availability</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="profile">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="w-5 h-5" />
+                  Profile Settings
+                </CardTitle>
+                <CardDescription>
+                  Manage your personal information and preferences
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="providerName">Name</Label>
+                    <Input
+                      id="providerName"
+                      value={session.user.name || ''}
+                      readOnly
+                      className="bg-gray-50"
+                    />
+                    <p className="text-xs text-gray-500">Contact admin to change your name</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="providerEmail">Email</Label>
+                    <Input
+                      id="providerEmail"
+                      value={session.user.email || ''}
+                      readOnly
+                      className="bg-gray-50"
+                    />
+                    <p className="text-xs text-gray-500">Contact admin to change your email</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="providerRole">Role</Label>
+                  <Input
+                    id="providerRole"
+                    value={session.user.role}
+                    readOnly
+                    className="bg-gray-50"
+                  />
+                </div>
+                <div className="p-4 border rounded-lg bg-blue-50">
+                  <h4 className="font-medium text-blue-900 mb-2">Profile Management</h4>
+                  <p className="text-sm text-blue-800 mb-3">
+                    To update your personal information, please contact your administrator.
+                  </p>
+                  <p className="text-xs text-gray-600">
+                    This ensures data consistency and security across the platform.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="payment">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <SettingsIcon className="w-5 h-5" />
+                  Payment Settings
+                </CardTitle>
+                <CardDescription>
+                  Connect your Stripe account to receive payments from clients
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Stripe Connect Section */}
+                <div className="space-y-4 p-4 border rounded-lg bg-blue-50">
+                  <h4 className="font-medium text-blue-900">Stripe Connect - Payment Processing</h4>
+                  <p className="text-sm text-blue-800">
+                    Connect your business to Stripe to accept online payments. Platform fee: 5% + Stripe fees
+                  </p>
+                  
+                  {stripeConnectStatus ? (
+                    <div className="space-y-3">
+                      {stripeConnectStatus.connected ? (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-3 h-3 rounded-full ${
+                              stripeConnectStatus.status === 'active' ? 'bg-green-500' : 
+                              stripeConnectStatus.status === 'restricted' ? 'bg-yellow-500' : 'bg-red-500'
+                            }`} />
+                            <span className="text-sm font-medium">
+                              Status: {stripeConnectStatus.status === 'active' ? 'Active' : 
+                                      stripeConnectStatus.status === 'restricted' ? 'Setup Required' : 'Pending'}
+                            </span>
+                          </div>
+                          
+                          {stripeConnectStatus.status !== 'active' && (
+                            <div className="text-sm text-orange-600">
+                              Your Stripe account needs additional setup to accept payments.
+                              <Button 
+                                variant="link" 
+                                className="p-0 h-auto text-orange-600"
+                                onClick={() => window.open('https://dashboard.stripe.com', '_blank')}
+                              >
+                                Complete setup in Stripe Dashboard
+                              </Button>
+                            </div>
+                          )}
+                          
+                          <div className="text-xs text-gray-600">
+                            Account ID: {stripeConnectStatus.accountId}
+                          </div>
                         </div>
+                      ) : (
+                        <Button 
+                          onClick={handleStripeConnectOnboarding}
+                          disabled={stripeConnectLoading}
+                          className="w-full"
+                        >
+                          {stripeConnectLoading ? 'Setting up...' : 'Connect Stripe Account'}
+                        </Button>
                       )}
-                      
-                      <div className="text-xs text-gray-600">
-                        Account ID: {stripeConnectStatus.accountId}
-                      </div>
                     </div>
                   ) : (
-                    <Button 
-                      onClick={handleStripeConnectOnboarding}
-                      disabled={stripeConnectLoading}
-                      className="w-full"
-                    >
-                      {stripeConnectLoading ? 'Setting up...' : 'Connect Stripe Account'}
-                    </Button>
+                    <div className="text-sm text-gray-500">Loading Stripe status...</div>
                   )}
                 </div>
-              ) : (
-                <div className="text-sm text-gray-500">Loading Stripe status...</div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+
+                {/* Payment Information */}
+                <div className="space-y-4 p-4 border rounded-lg">
+                  <h4 className="font-medium">Payment Information</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium">Platform Commission:</span>
+                      <span className="ml-2">5%</span>
+                    </div>
+                    <div>
+                      <span className="font-medium">Stripe Processing Fee:</span>
+                      <span className="ml-2">2.9% + $0.30</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    You will receive payments directly to your connected Stripe account minus the platform commission and Stripe fees.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="availability">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="w-5 h-5" />
+                  Availability Settings
+                </CardTitle>
+                <CardDescription>
+                  Your availability is managed by the administrator as part of the organization's schedule
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="p-4 border rounded-lg bg-gray-50">
+                  <h4 className="font-medium text-gray-900 mb-2">Schedule Management</h4>
+                  <p className="text-sm text-gray-600 mb-3">
+                    Your working hours and availability are set by the administrator to ensure consistent scheduling across the organization.
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    To request changes to your availability, please contact your administrator.
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Current Organization Hours</Label>
+                  <div className="grid gap-2">
+                    {DAYS_OF_WEEK.map(day => (
+                      <div key={day.key} className="flex items-center justify-between p-2 border rounded text-sm">
+                        <span className="font-medium">{day.label}</span>
+                        <span className="text-gray-600">
+                          {settings?.workingHours?.[day.key]?.enabled 
+                            ? `${settings.workingHours[day.key].start} - ${settings.workingHours[day.key].end}`
+                            : 'Closed'
+                          }
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       ) : (
         // Admin view - all settings tabs
       <Tabs defaultValue="business" className="space-y-6">
@@ -587,8 +713,8 @@ export default function TenantSettingsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               {DAYS_OF_WEEK.map((day) => (
-                <div key={day.key} className="flex items-center gap-4 p-4 border rounded-lg">
-                  <div className="w-24">
+                <div key={day.key} className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border rounded-lg">
+                  <div className="w-full sm:w-24">
                     <Label className="font-medium">{day.label}</Label>
                   </div>
                   
@@ -601,14 +727,14 @@ export default function TenantSettingsPage() {
                   </div>
 
                   {settings.workingHours[day.key]?.enabled && (
-                    <>
+                    <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                       <div className="grid gap-2">
                         <Label className="text-xs">Start Time</Label>
                         <Input
                           type="time"
                           value={settings.workingHours[day.key]?.start || '09:00'}
                           onChange={(e) => updateWorkingHours(day.key, 'start', e.target.value)}
-                          className="w-32"
+                          className="w-full sm:w-32"
                         />
                       </div>
                       
@@ -618,10 +744,10 @@ export default function TenantSettingsPage() {
                           type="time"
                           value={settings.workingHours[day.key]?.end || '17:00'}
                           onChange={(e) => updateWorkingHours(day.key, 'end', e.target.value)}
-                          className="w-32"
+                          className="w-full sm:w-32"
                         />
                       </div>
-                    </>
+                    </div>
                   )}
                 </div>
               ))}
@@ -676,7 +802,7 @@ export default function TenantSettingsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="cancellationDeadline">Cancellation Deadline (hours)</Label>
                   <Input
@@ -750,7 +876,7 @@ export default function TenantSettingsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="fromName">From Name</Label>
                   <Input
